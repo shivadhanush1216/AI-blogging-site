@@ -21,9 +21,25 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/blogs", blogRoutes);
 
+// Root route (helpful landing/info)
+app.get('/', (req, res) => {
+  res.json({
+    service: 'AI Blogging API',
+    status: 'OK',
+    docs: '/health',
+    endpoints: ['/api/blogs', '/api/blogs/generate', '/api/blogs/generate-stream'],
+    repository: 'https://github.com/shivadhanush1216/AI-blogging-site'
+  });
+});
+
 // Add a simple health check route
 app.get("/health", (req, res) => {
   res.json({ status: "OK", message: "Server is running" });
+});
+
+// 404 fallback (after all routes)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found', path: req.path });
 });
 
 // Connect MongoDB
