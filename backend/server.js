@@ -17,17 +17,56 @@ app.use(helmet({
 }));
 
 // Dynamic CORS based on env ALLOWED_ORIGINS
-const rawOrigins = process.env.ALLOWED_ORIGINS || "*";
-let allowedOrigins = rawOrigins.split(',').map(o => o.trim()).filter(Boolean);
+// Examples:
+//   ALLOWED_ORIGINS=https://ai-blogging-site.vercel.app,https://my-secondary.app
+//   ALLOWED_ORIGINS=*.vercel.app (wildcard)
+const rawOrigins = process.env.ALLOWED_ORIGINS || '*';
+let allowedOrigins = rawOrigins
+  .split(/[\s,]+/)
+  .map(o => o.trim())
+  .filter(Boolean);
 if (allowedOrigins.length === 1 && allowedOrigins[0] === '*') {
-  allowedOrigins = []; // treat as open
+  allowedOrigins = []; // open mode
 }
+
+const normalizeOrigin = (o) => {
+  try {
+    // Remove trailing slash and lowercase
+    return o.replace(/\/$/, '').toLowerCase();
+  } catch (_) { return o; }
+};
+
+const originAllowed = (origin) => {
+  if (!origin) return true; // non-browser or same-origin
+  if (allowedOrigins.length === 0) return true; // open
+  const norm = normalizeOrigin(origin);
+  for (const patternRaw of allowedOrigins) {
+    const pattern = normalizeOrigin(patternRaw);
+    if (pattern.startsWith('*.')) {
+      const suffix = pattern.slice(2);
+      if (norm.endsWith(suffix)) return true;
+    } else if (norm === pattern) {
+      return true;
+    }
+  }
+  return false;
+};
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (originAllowed(origin)) return next();
+  // Do not throw internal error; block politely
+  return res.status(403).json({ error: 'CORS blocked', origin });
+});
+
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error('CORS blocked for origin: ' + origin));
+    if (originAllowed(origin)) return cb(null, true);
+    return cb(null, false); // silently fail CORS (403 handled earlier)
   }
 }));
+
+console.log('[CORS] Allowed origins:', allowedOrigins.length ? allowedOrigins : '(open)');
 
 app.use(express.json({ limit: '1mb' }));
 
