@@ -39,13 +39,16 @@ Flow: User prompt → Backend validates → Cohere streaming/batch → Keyword r
 [React SPA] --fetch--> [Express API] --LLM--> [Cohere]
       |                           \
       |                            \--(keywords)--> [Cohere]
-      |                                            \
+      |                                               |
  (SSE stream) <----------------------------------  [Stream]
-      |                            \---> [Unsplash API]
-      |                                   |
-      |                               [Image URLs]
-      |                                        \
+      |
+      |                                 \-------> [Unsplash API]
+      |                                               |
+      |                                           [Image URLs]
+      |                                        \      |
+      |                                               |
      (View Stored) <--- [MongoDB (Blog docs)] <--- Save
+
 ```
 
 ## 4. Tech Stack
