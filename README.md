@@ -1,4 +1,4 @@
-<div align="center">
+
 
 # AI Blogging Platform
 
@@ -6,7 +6,7 @@ An academic full‑stack project demonstrating real‑time AI assisted content g
 
 "From empty prompt to a formatted illustrated article in seconds."
 
-</div>
+
 
 ---
 
