@@ -57,8 +57,11 @@ router.delete("/:id", async (req, res) => {
 // ---------- POST generate (normal full-block) ----------
 router.post("/generate", async (req, res) => {
   try {
-    const { prompt } = req.body;
-    if (!prompt) return res.status(400).json({ error: "Prompt required" });
+    let { prompt } = req.body;
+    if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: "Prompt required" });
+    prompt = prompt.trim();
+    if (prompt.length < 5) return res.status(400).json({ error: "Prompt too short" });
+    if (prompt.length > 180) return res.status(400).json({ error: "Prompt too long (max 180 chars)" });
 
     // Generate blog content
     const response = await cohere.chat({
@@ -100,9 +103,18 @@ router.post("/generate", async (req, res) => {
 
 // ---------- POST generate-stream (stream like ChatGPT) ----------
 router.post("/generate-stream", async (req, res) => {
-  const { prompt } = req.body;
-  if (!prompt) {
+  let { prompt } = req.body;
+  if (!prompt || typeof prompt !== 'string') {
     res.status(400).json({ error: "Prompt required" });
+    return;
+  }
+  prompt = prompt.trim();
+  if (prompt.length < 5) {
+    res.status(400).json({ error: "Prompt too short" });
+    return;
+  }
+  if (prompt.length > 180) {
+    res.status(400).json({ error: "Prompt too long (max 180 chars)" });
     return;
   }
 

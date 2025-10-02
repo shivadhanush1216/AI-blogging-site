@@ -2,15 +2,43 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const blogRoutes = require("./routes/blog");
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ----- Security & Core Middleware -----
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Dynamic CORS based on env ALLOWED_ORIGINS
+const rawOrigins = process.env.ALLOWED_ORIGINS || "*";
+let allowedOrigins = rawOrigins.split(',').map(o => o.trim()).filter(Boolean);
+if (allowedOrigins.length === 1 && allowedOrigins[0] === '*') {
+  allowedOrigins = []; // treat as open
+}
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS blocked for origin: ' + origin));
+  }
+}));
+
+app.use(express.json({ limit: '1mb' }));
+
+// Rate limiter for generation endpoints
+const genLimiter = rateLimit({
+  windowMs: (parseInt(process.env.GEN_WINDOW_MINUTES || '15', 10)) * 60 * 1000,
+  max: parseInt(process.env.GEN_MAX_REQUESTS || '10', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Rate limit exceeded. Try again later.' }
+});
 
 // Add request logging
 app.use((req, res, next) => {
@@ -19,6 +47,14 @@ app.use((req, res, next) => {
 });
 
 // Routes
+// Attach limiter only to expensive AI routes via mount path filtering
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/blogs/generate')) {
+    return genLimiter(req, res, next);
+  }
+  next();
+});
+
 app.use("/api/blogs", blogRoutes);
 
 // Root route (helpful landing/info)
@@ -43,8 +79,11 @@ app.use((req, res) => {
 });
 
 // Connect MongoDB
-
-mongoose.set("debug", true);
+if (process.env.NODE_ENV === 'production') {
+  mongoose.set('debug', false);
+} else {
+  mongoose.set('debug', true);
+}
 
 
 mongoose
