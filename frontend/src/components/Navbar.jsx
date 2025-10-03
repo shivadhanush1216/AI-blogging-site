@@ -7,9 +7,9 @@ export default function Navbar() {
 
   return (
     <nav
-      className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[90%] z-50 
-      backdrop-blur-xl bg-white/40 dark:bg-gray-900/60 
-      border border-gray-200 dark:border-gray-700 
+      className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[90%] z-50
+      backdrop-blur-xl bg-white/40 dark:bg-gray-900/60
+      border border-gray-200 dark:border-gray-700
       shadow-lg rounded-2xl transition-colors"
     >
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
@@ -23,8 +23,8 @@ export default function Navbar() {
           AI Blogging
         </Link>
 
-        {/* Links */}
-        <div className="flex space-x-6 items-center">
+        {/* Center Links (Home - only visible on md+) */}
+        <div className="hidden md:flex space-x-6 items-center">
           <Link
             to="/"
             className="relative text-gray-800 dark:text-gray-300 font-medium 
@@ -35,10 +35,15 @@ export default function Navbar() {
           >
             Home
           </Link>
+        </div>
+
+        {/* Right Section */}
+        <div className="flex items-center gap-3">
+          {/* Create Button - Always Visible */}
           <Link
             to="/create"
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 
-            text-white font-medium shadow-md hover:shadow-lg hover:scale-105 transition-transform"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 
+            text-white font-medium shadow-md hover:shadow-lg hover:scale-105 transition-transform text-sm sm:text-base"
           >
             ✨ Create Blog
           </Link>
@@ -56,3 +61,4 @@ export default function Navbar() {
     </nav>
   );
 }
+  
